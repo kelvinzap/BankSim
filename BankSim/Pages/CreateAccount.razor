@@ -1,0 +1,110 @@
+﻿@page "/accounts/create/{id}"
+@inject IAccount accountAction
+@using BankSim.Component;
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager navManager
+
+
+<div class="transfer-container">
+    <h1 style="font-weight:bold; font-size:30px">Create Account</h1>
+
+    <div class="transfer-content card">
+
+
+        
+            <EditForm Model="request" OnValidSubmit="CompleteCreation">
+            <div style="margin-bottom: 14px" class="validation-message">@customError</div>
+            <DataAnnotationsValidator />
+            <CustomValidator @ref="_customValidator"></CustomValidator>
+
+
+                <div class="form-group">
+                    <label for="accountNumber">Account Number</label>
+                    <InputText id="accountNumber" class="form-control" placeholder="account number" @bind-Value="request.AccountNumber" />
+                    <ValidationMessage For=@( () => request.AccountNumber ) />
+                </div>
+
+
+                <div class="form-group">
+                    <label for="balance">Balance</label>
+                    <InputNumber class="form-control" placeholder="balance" id="balance" @bind-Value="request.Balance" />
+                    <ValidationMessage For=@( () => request.Balance ) />
+                </div>
+                
+                <div class="form-group">
+                    <label for="type">Account Type</label>
+                    <InputText class="form-control" placeholder="type" id="balance" @bind-Value="request.Type" />
+                    <ValidationMessage For=@( () => request.Type ) />
+                </div>
+
+                <button  type="submit" class="btn btn-primary" value="Proceed">Proceed</button>
+
+            </EditForm>
+     
+    </div>
+</div>
+@code {
+    private AccountDto request = new();        
+    [Parameter]
+    public string Id { get; set; }
+    private CustomValidator _customValidator;
+    private string customError;
+    [Inject] protected ToastService ToastService { get; set; }
+    [Inject] protected PreloadService PreloadService { get; set; }
+
+
+    private async Task CompleteCreation()
+    {
+        PreloadService.Show();
+
+        AccountDto dto = new()
+            {
+               AccountNumber = request.AccountNumber,
+               Balance = request.Balance,
+               Type = request.Type,
+               CustomerId = Convert.ToInt32(Id)
+            };
+
+        var errors = new Dictionary<string, List<string>>();
+
+        var accountNumberValid = await accountAction.CheckAccountNumberAvailability(dto.AccountNumber);
+
+
+        if (accountNumberValid.ResponseHeader.ResponseCode == "01")
+        {
+            PreloadService.Hide();
+            customError = "Something went wrong";
+            return;
+        }
+
+        if (!accountNumberValid.IsAvailable)
+        {
+            PreloadService.Hide();
+            errors.Add(nameof(request.AccountNumber), new List<string> { "Account Number already exists" });
+            _customValidator.DisplayErrors(errors);
+            return;
+        }
+
+        if (dto.Balance < 50)
+        {
+            PreloadService.Hide();
+            errors.Add(nameof(request.Balance), new List<string> { "Balance cannot be lower than 50" });
+            _customValidator.DisplayErrors(errors);
+            return;
+        }
+
+        var result = await accountAction.CreateAccount(dto);
+
+        PreloadService.Hide();
+
+        if (result.ResponseCode == "01")
+        {
+            customError = "Something went wrong";
+            return;
+        }
+
+        ToastService.Notify(new(ToastType.Success, $"Account created successfully."));
+        navManager.NavigateTo($"customers/{dto.CustomerId}");
+
+    }
+}

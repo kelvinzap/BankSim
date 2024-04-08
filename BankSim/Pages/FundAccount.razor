@@ -1,0 +1,90 @@
+﻿@page "/accounts/fund/{id}"
+@inject IAccount accountAction
+@using BankSim.Component;
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager navManager
+
+
+
+@if (accountDto != null)
+{
+    <div class="transfer-container">
+        <h1 style="font-weight:bold; font-size:30px">Fund Account</h1>
+
+        <div class="transfer-content card">
+
+
+
+            <EditForm Model="request" OnValidSubmit="CompleteFunding">
+                <div style="margin-bottom: 14px" class="validation-message">@customError</div>
+                <DataAnnotationsValidator />
+                <CustomValidator @ref="_customValidator"></CustomValidator>
+
+
+                <div class="form-group">
+                    <label for="amount">Amount</label>
+                    <InputNumber class="form-control" placeholder="amount" id="balance" @bind-Value="request.Amount" />
+                    <ValidationMessage For=@( () => request.Amount ) />
+
+                </div>
+
+                <button type="submit" class="btn btn-primary" value="Proceed">Proceed</button>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    private FundAccountDto request = new();
+    private AccountDto accountDto = new();
+    [Parameter]
+    public string Id { get; set; }
+    private CustomValidator _customValidator;
+    private string customError;
+    [Inject] protected ToastService ToastService { get; set; }
+    [Inject] protected PreloadService PreloadService { get; set; }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        accountDto = await accountAction.GetAccountDetails(Id);
+    }
+
+    private async Task CompleteFunding()
+    {
+        PreloadService.Show();
+
+        FundAccountDto dto = new()
+            {
+                Amount = request.Amount,
+                AccountId = Id
+            };
+
+        var errors = new Dictionary<string, List<string>>();
+
+        if (dto.Amount < 50)
+        {
+            PreloadService.Hide();
+            errors.Add(nameof(request.Amount), new List<string> { "Amount cannot be lower than 50" });
+            _customValidator.DisplayErrors(errors);
+            return;
+        }
+
+        var result = await accountAction.FundAccount(dto);
+
+        PreloadService.Hide();
+
+        if (result.ResponseCode == "01")
+        {
+            customError = "Something went wrong";
+            return;
+        }
+
+        ToastService.Notify(new(ToastType.Success, $"Account funded successfully."));
+        navManager.NavigateTo($"accounts/{dto.AccountId}");
+
+    }
+}

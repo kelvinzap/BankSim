@@ -1,0 +1,197 @@
+﻿@page "/transactions/{id}"
+@inject ITransaction transactionAction
+@inject NavigationManager navManager
+
+
+
+
+<div class="customer-cont">
+    
+    <div class="flex justify-between">
+        <h1 style="font-weight:bold; font-size:30px">Transaction Details</h1>
+    </div>
+@if (transaction != null)
+    {
+       
+
+        <div class="card text-purp">
+            
+
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Session Id</p>
+                <div class="d-flex ">
+                    <p class="text-lg text-md text-sm mr-2">
+                        @transaction.SessionId
+                    </p>
+                </div>
+            </div>
+            
+            @if (!string.IsNullOrEmpty(transaction.MainTransactionId))
+            {
+                <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                    <p class="text-dkbl text-lg text-md text-sm">Original Transaction Session Id</p>
+                    <div class="d-flex ">
+                        <p class=" text-lg text-md text-sm mr-2">
+                            @transaction.MainTransactionId
+                        </p>
+                    </div>
+                </div>                
+            }
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Payment Ref</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.TransactionId
+                    </p>
+                </div>
+            </div>
+
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Amount</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @(string.Format("{0:0,0.00}", transaction.Amount))
+                    </p>
+                </div>
+            </div>
+
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Transaction type</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.TransactionType
+                    </p>
+                </div>
+            </div>
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Channel</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.Channel
+                    </p>
+                </div>
+            </div>
+            
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Group</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.Group
+                    </p>
+                </div>
+            </div>
+            
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Sector</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.Sector
+                    </p>
+                </div>
+            </div>
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Response Code</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.ResponseCode
+                    </p>
+                </div>
+            </div>
+
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Response Message</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.ResponseMessage
+                    </p>
+                </div>
+            </div>
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Destination Institution Id</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.DestinationBankCode
+                    </p>
+                </div>
+            </div>
+            
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Destination Account</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.DestinationAccount
+                    </p>
+                </div>
+            </div>
+
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Destination Account Name</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.CreditAccountName
+                    </p>
+                </div>
+            </div>
+
+
+            @if (string.IsNullOrEmpty(transaction.MainTransactionId))
+            {
+                <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                    <p class="text-dkbl text-lg text-md text-sm">Source Institution Id</p>
+                    <div class="d-flex ">
+                        <p class=" text-lg text-md text-sm mr-2">
+                            @transaction.SourceBankCode
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                    <p class="text-dkbl text-lg text-md text-sm">Source Account</p>
+                    <div class="d-flex ">
+                        <p class=" text-lg text-md text-sm mr-2">
+                            @transaction.SourceAccount
+                        </p>
+                    </div>
+                </div>
+            
+                <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                    <p class="text-dkbl text-lg text-md text-sm">Source Account Name</p>
+                    <div class="d-flex ">
+                        <p class=" text-lg text-md text-sm mr-2">
+                            @transaction.DebitAccountName
+                        </p>
+                    </div>
+                </div>
+            }
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Narration</p>
+                <div class="d-flex word-break">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.Narration
+                    </p>
+                </div>
+            </div>          
+            
+            <div class="border-bottom d-flex justify-content-between align-items-end" style="margin-top: 10px;">
+                <p class="text-dkbl text-lg text-md text-sm">Date of Transaction</p>
+                <div class="d-flex ">
+                    <p class=" text-lg text-md text-sm mr-2">
+                        @transaction.EntryDate.ToString("dd MMMM yyyy hh:mm:ss tt")
+                    </p>
+                </div>
+            </div>                                      
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    private TransactionDto transaction;
+
+    protected override async Task OnInitializedAsync()
+    {
+        transaction = await transactionAction.GetTransaction(Id);
+    }
+
+}

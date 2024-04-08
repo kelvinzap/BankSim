@@ -1,0 +1,194 @@
+﻿@page "/transactions"
+
+
+@inject ITransaction transactionAction
+@inject NavigationManager navManager
+
+        
+<h1 style="font-weight:bold; font-size:30px">Transactions</h1>
+
+<div class="card">
+    <EditForm Model="filters" OnSubmit="() => FilterTransactions()">
+
+        
+            <div class="trans-filter-cont">
+
+                <div class="filters">
+                    <label for="inputEmail4" class="form-label">Start Date</label>
+                    <InputDate id="firstname" class="form-control" placeholder="firstname" @bind-Value="filters.StartDate"/>
+                </div>
+
+                <div class="filters">
+                    <label for="inputEmail4" class="form-label">End Date</label>
+                    <InputDate id="firstname" class="form-control" placeholder="firstname" @bind-Value="filters.EndDate"/>
+                </div>
+                <div class="filters">
+                    <label for="inputEmail4" class="form-label">Status</label>
+                    <select class="form-control" @bind="filters.Status">
+                        <option value="" >All</option>
+                        <option value="00">00</option>
+                        <option value="01">01</option>
+                        <option value="09">09</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="25">25</option>
+                        <option value="61">61</option>
+                    </select>
+
+                </div>
+               
+                <div class="filters">
+                    <label for="inputEmail4" class="form-label">Session ID</label>
+                    <InputText @bind-Value="filters.SessionId" id="sessionId" class="form-control" placeholder="sessionId"/>
+                </div>
+                <div class="filters">
+                    <label for="institution" class="form-label">Institution</label>
+                    <InputText @bind-Value="filters.Institution" id="institution" class="form-control" placeholder="institution"/>
+                </div>                
+                <div class="filters" style="display: grid;align-items: end;">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+
+            </div>
+        
+    </EditForm>
+</div>
+  <div class="card">
+    <div class="transactions">
+
+       
+
+
+       
+        <div>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Session Id</th>                        
+                        <th scope="col">Account Id</th>
+                        <th scope="col">Amount</th>                        
+                        <th scope="col">Status</th>                                    
+                        <th scope="col">Source Institution</th>            
+                        <th scope="col">Destination Institution</th>                                                          
+                        <th scope="col">Date of transaction</th>
+                        <th scope="col"></th>
+                    </tr>
+
+                </thead>
+
+                @if (transacDto.Transactions != null)
+                {
+                    @foreach (var transaction in transacDto.Transactions)
+                    {
+
+                        string myMarkup = string.IsNullOrEmpty(transaction.MainTransactionId) ? transaction.SessionId : $"<p style=\"margin: 0;line - height: 1; font-size: 12px;\"> {transaction.MainTransactionId}</p>  <br> {transaction.SessionId}";
+
+                        string myAmountMarkup = transaction.TransactionType == "DEBIT" ? $"<p style=\"color: red;\"> -{string.Format("{0:0,0.00}", transaction.Amount)}</p>" : $"<p style=\"color: green;\"> +{string.Format("{0:0,0.00}", transaction.Amount)}</p>";
+
+                        <tbody>
+                            <tr>
+                                <td scope="row" class="table-data" @onclick="(() => OpenDetails(transaction))">@(startSerialNumber + transacDto.Transactions.IndexOf(transaction))</td>
+                                <td>@((MarkupString)myMarkup)</td>
+                                <td>@(transaction.TransactionType == "DEBIT" ? transaction.SourceAccount : transaction.DestinationAccount)</td>
+                                <td>@((MarkupString)myAmountMarkup)</td>                                
+                                <td>@transaction.ResponseCode</td>
+                                <td>@transaction.SourceBankCode</td>
+                                <td>@transaction.DestinationBankCode</td>                               
+                                <td>@transaction.EntryDate.ToString("MM/dd/yyyy")</td>
+                                <td class="table-data green" @onclick="(() => OpenDetails(transaction))"><i class="bi bi-eye-fill"></i></td>
+
+                            </tr>
+                        </tbody>
+                    }
+                }
+            </table>
+
+           
+        </div>
+     
+    </div>
+    
+</div>
+@if (transacDto.Transactions.Count > 0)
+{
+    <span style="display: flex;justify-content: flex-end;padding-top: 18px;">
+        <Pagination ActivePageNumber=currentPageNumber
+                    PageChanged="OnPageChangedAsync"
+                    TotalPages="@transacDto.TotalPages"
+                    DisplayPages="5"
+                    FirstLinkIcon="IconName.ChevronDoubleLeft"
+                    PreviousLinkIcon="IconName.ChevronLeft"
+                    NextLinkIcon="IconName.ChevronRight"
+                    LastLinkIcon="IconName.ChevronDoubleRight" />
+    </span>
+}
+
+@code {
+
+    private TransactionsDto transacDto = new();    
+    private TransactionFilter filters = new();
+    private int itemsPerPage = 20;
+    private int startSerialNumber => (currentPageNumber - 1) * itemsPerPage + 1;
+    private int currentPageNumber = 1;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {            
+            await GetAllTransactions(1);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnPageChangedAsync(int newPageNumber)
+    {
+        //await GetAllTransactions(newPageNumber);   
+        await Task.Run(() => { 
+            currentPageNumber = newPageNumber; 
+
+        });    
+        await FilterTransactions(newPageNumber);
+    }
+
+    private void OpenDetails(TransactionDto transaction)
+    {
+        navManager.NavigateTo($"transactions/{transaction.Id}");
+    }
+
+    private async Task GetAllTransactions(int page)
+    {
+        var paginationFilter = new PaginationFilter
+        {
+            PageNumber = page           
+        };
+
+        var output = await transactionAction.GetAllPagedTransactions(paginationFilter);
+        transacDto = output;
+    }
+
+
+    private async Task FilterTransactions(int pageNumber = 1)
+    {
+        currentPageNumber = pageNumber;
+        var paginationFilter = new PaginationFilter
+            {
+                PageNumber = pageNumber
+            };
+
+        var filter = new TransactionFilter
+            {
+                StartDate = filters.StartDate,
+                EndDate = filters.EndDate,
+                SessionId = filters.SessionId,
+                Status = filters.Status,
+                Institution = filters.Institution                
+            };
+
+        transacDto = await transactionAction.GetAllPagedTransactions(paginationFilter, filter);
+   
+        StateHasChanged();
+
+    }
+}

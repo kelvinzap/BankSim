@@ -1,0 +1,34 @@
+﻿@inherits LayoutComponentBase
+@inject IConfiguration Configuration
+
+<div class="container-scroller">
+    <div class="container-fluid page-body-wrapper full-page-wrapper">
+        <div class="content-wrapper d-flex align-items-center auth px-0">
+            <div class="row w-100 mx-0">
+                <div class="col-lg-4 mx-auto">
+                    <PageTitle>@bankName</PageTitle>
+
+
+                                @Body
+                    
+
+                    <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+                    <Preload />
+                </div>
+            </div>
+        </div>
+        <!-- content-wrapper ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+</div>
+
+
+@code{
+    private string bankName = "";
+
+
+    protected override void OnInitialized()
+    {
+        bankName = Configuration.GetValue<string>("BankName");
+    }
+}

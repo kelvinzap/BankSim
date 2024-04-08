@@ -1,0 +1,279 @@
+﻿@page "/customers/create"
+@inject ICustomer customerAction
+@inject IAccount accountAction
+@using BankSim.Component;
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager navManager
+
+
+
+<div class="transfer-container">
+    <h1 style="font-weight:bold; font-size:30px">Create Customer</h1>
+
+    <div class="card">
+
+
+
+        <EditForm Model="request" OnValidSubmit="CompleteCreation">
+            <div style="margin-bottom: 14px" class="validation-message">@customError</div>
+            <DataAnnotationsValidator />
+            <CustomValidator @ref="_customValidator"></CustomValidator>
+
+
+            <p class="card-description">
+                Personal info
+            </p>
+
+           <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="firstname">FirstName</label>
+                        <div class="col-sm-9">
+                          <InputText id="firstname" class="form-control" placeholder="firstname" @bind-Value="request.FirstName" />
+                            <ValidationMessage For=@( () => request.FirstName ) />
+
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="lastname">LastName</label>
+                        <div class="col-sm-9">
+                            <InputText id="lastname" class="form-control" placeholder="lastname" @bind-Value="request.LastName" />
+                            <ValidationMessage For=@( () => request.LastName ) />
+
+                        </div>
+                    </div>
+                </div>
+                
+                
+           </div>
+            
+           <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="middlename">MiddleName</label>
+                        <div class="col-sm-9">
+                            <InputText id="middlename" class="form-control" placeholder="middlename" @bind-Value="request.MiddleName" />
+                            <ValidationMessage For=@( () => request.MiddleName ) />
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="address">Address</label>
+                        <div class="col-sm-9">
+                            <InputText id="address" class="form-control" placeholder="address" @bind-Value="request.Address" />
+                            <ValidationMessage For=@( () => request.Address ) />
+
+                        </div>
+                    </div>
+                </div>
+           </div>
+           
+           <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="email">Email</label>
+                        <div class="col-sm-9">
+                            <InputText id="email" class="form-control" placeholder="email" @bind-Value="request.Email" />
+                            <ValidationMessage For=@( () => request.Email ) />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="phoneNumber">Phone</label>
+                        <div class="col-sm-9">
+                            <InputText id="phoneNumber" class="form-control" placeholder="phone number" @bind-Value="request.PhoneNumber" />
+                            <ValidationMessage For=@( () => request.PhoneNumber ) />
+
+                        </div>
+                    </div>
+                </div>
+           </div>
+           
+           <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="dateOfBirth">DateOfBirth</label>
+                        <div class="col-sm-9">
+                            <InputDate id="email" class="form-control" placeholder="dateOfBirth" @bind-Value="request.DateOfBirth" />
+                            <ValidationMessage For=@( () => request.DateOfBirth ) />
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="phoneNumber">BVN</label>
+                        <div class="col-sm-9">
+                            <InputText id="bvn" class="form-control" placeholder="bvn" @bind-Value="request.BVN" />
+                            <ValidationMessage For=@( () => request.BVN ) />
+
+                        </div>
+                    </div>
+                </div>
+           </div>
+           
+           <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="nin">NIN</label>
+                        <div class="col-sm-9">
+                            <InputText id="nin" class="form-control" placeholder="nin" @bind-Value="request.NIN" />
+                            <ValidationMessage For=@( () => request.NIN ) />
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="kycLevel">KYC Level</label>
+                        <div class="col-sm-9">
+                            <InputText id="kycLevel" class="form-control" placeholder="kycLevel" @bind-Value="request.KYCLevel" />
+                            <ValidationMessage For=@( () => request.KYCLevel ) />
+
+                        </div>
+                    </div>
+                </div>
+           </div>
+                                          
+            <p class="card-description">
+                Account info
+            </p>
+
+             <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="accountNumber">Account Number</label>
+                        <div class="col-sm-9" style="padding: 0 41px;">
+                            <InputText id="accountNumber" class="form-control" placeholder="accountNumber" @bind-Value="request.AccountNumber" />
+                            <ValidationMessage For=@( () => request.AccountNumber ) />
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="accountType">Account Type</label>
+                        <div class="col-sm-9" style="padding: 0 41px;">
+                            <InputText id="accountType" class="form-control" placeholder="accountType" @bind-Value="request.AccountType" />
+                            <ValidationMessage For=@( () => request.AccountType ) />
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label" for="balance">Balance</label>
+                        <div class="col-sm-9">
+                            <InputNumber id="balance" class="form-control" placeholder="balance" @bind-Value="request.Balance" />
+                            <ValidationMessage For=@( () => request.Balance ) />
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <button type="submit" class="btn btn-primary" value="Proceed">Create</button>
+
+        </EditForm>
+
+    </div>
+</div>
+@code {
+    private CreateCustomerDto request = new();
+    private CustomValidator _customValidator;
+    private string customError;
+    [Inject] protected ToastService ToastService { get; set; }
+    [Inject] protected PreloadService PreloadService { get; set; }
+
+    protected override void OnInitialized()
+    {
+        
+    }
+
+    private async Task CompleteCreation()
+    {
+        PreloadService.Show();
+        CreateCustomerDto dto = new()
+            {
+                AccountNumber = request.AccountNumber,
+                Balance = request.Balance,
+                AccountType = request.AccountType,
+                PhoneNumber = request.PhoneNumber,
+                Address = request.Address,
+                BVN = request.BVN,
+                Email = request.Email,
+                DateOfBirth = request.DateOfBirth,
+                FirstName = request.FirstName,
+                KYCLevel = request.KYCLevel,
+                LastName = request.LastName,
+                MiddleName = request.MiddleName,
+                NIN = request.NIN
+            };
+
+        var errors = new Dictionary<string, List<string>>();
+
+        var accountNumberValid = await accountAction.CheckAccountNumberAvailability(dto.AccountNumber);
+
+
+        if(accountNumberValid.ResponseHeader.ResponseCode == "01")
+        {
+            PreloadService.Hide();
+            customError = "Something went wrong";            
+            return;
+        }
+
+        if (!accountNumberValid.IsAvailable)
+        {
+            PreloadService.Hide();
+            errors.Add(nameof(request.AccountNumber), new List<string> { "Account Number already exists" });
+            _customValidator.DisplayErrors(errors);
+            return;
+        }
+
+        if (dto.Balance < 50)
+        {
+            PreloadService.Hide();
+            errors.Add(nameof(request.Balance), new List<string> { "Balance cannot be lower than 50" });
+            _customValidator.DisplayErrors(errors);
+            return;
+        }
+
+        var result = await customerAction.CreateCustomer(dto);
+        PreloadService.Hide();
+
+        if(result.ResponseHeader.ResponseCode == "01")
+        {
+            customError = "Something went wrong";            
+            return;
+        }
+        
+        ToastService.Notify(new(ToastType.Success, $"Customer created successfully."));
+        navManager.NavigateTo($"customers");
+
+    }
+
+    private async Task CheckAccountNumberAvailability(ChangeEventArgs e)
+    {
+
+        request.AccountNumber = e.Value.ToString();
+        //validation goes here
+
+    }
+}

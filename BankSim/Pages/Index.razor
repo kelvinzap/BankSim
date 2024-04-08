@@ -1,0 +1,30 @@
+﻿@page "/"
+@attribute [Authorize]
+<div class="card" style="background: transparent;border: none;">
+    <div class="index-box grid grid-cols-1 sm:grid-cols-2 gap-4 p-10" style="padding: 0;">
+        <!-- Box 1 -->
+        <div class="col-6 sm:col-12 bg-cover bg-center p-4 rounded-lg h-[200px] relative" style="background: #C9E3FE; display: flex;justify-content: center;">
+            <a href="customers">
+                <div class="absolute bottom-0 left-0 pl-12 pb-5" style="color:#000080 ">
+                    <h1 style="font-size:30px; font-weight:bold;">Customers</h1>
+                    <h4>Manage all customers in the bank</h4>
+
+                </div>
+            </a>
+        </div>
+        
+
+        <!-- Box 2 -->
+        <div class="col-6 sm:col-12 bg-cover bg-center p-4 rounded-lg h-[200px] relative" style="background: #FED8FF; display: flex;justify-content: center;">
+            <a href="transactions">
+                <div class="absolute bottom-0 left-0 pl-12 pb-5" style="color:#800080 ">
+                    <h1 style="font-size:30px; font-weight:bold;">Transactions</h1>
+                    <h4>View all bank transactions</h4>
+
+                </div>
+            </a>
+        </div>
+        <!-- Box 3 -->
+        
+    </div>
+</div>

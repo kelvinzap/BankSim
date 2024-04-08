@@ -1,0 +1,291 @@
+﻿@page "/transfer/{id}"
+@inject IAccount accountAction
+@using BankSim.Component;
+@using Microsoft.AspNetCore.Components
+@inject IConfiguration configuration
+    
+<div class="transfer-container">
+    <h1 style="font-weight:bold; font-size:30px">Transfer</h1>
+
+    <div class="transfer-content card">
+
+
+        <EditForm Model="request" OnValidSubmit="CompleteTransfer">
+            <div style="margin-bottom: 14px" class="validation-message">@customError</div>
+            <DataAnnotationsValidator />            
+            <CustomValidator @ref="_customValidator"></CustomValidator>
+            
+
+            <div class="form-group">
+                <label for="accountNumber">Account Number</label>
+                <input id="accountNumber" @oninput="AccountChanged" class="form-control" placeholder="account number" />
+                <ValidationMessage For=@( () => request.CreditAccount ) />
+            </div>
+            <p style="display: @(string.IsNullOrEmpty(request.CreditAccountName) ? "none" : "block" );">@request.CreditAccountName</p>
+
+            <div class="form-group">
+                <label for="amount">Amount</label>
+                <InputNumber class="form-control" placeholder="amount" id="amount" @bind-Value="request.Amount" />
+                <ValidationMessage For=@( () => request.Amount ) />
+            </div>
+            
+            
+            <div class="form-group">
+                <label for="bank">Bank</label>                
+                <select @onchange="GetAccountName" class="form-control bank-list">
+                    <option value="">Select Bank</option>
+                    @foreach (var bank in banks)
+                    {
+                        <option value="@bank.Code">
+                            @bank.Name
+                        </option>
+                    }
+
+                </select>
+                <ValidationMessage For=@( () => request.DestinationBankCode ) />
+
+            </div>
+
+            
+            <div class="form-group">
+                <label for="bank">Select Account</label>
+                <select @bind="request.DebitAccount" class="form-control bank-list">
+                    <option value="">Select Account</option>
+                    @foreach (var account in accounts)
+                    {
+                        <option value="@account.AccountNumber">
+                            @account.AccountNumber
+                        </option>
+                    }
+
+                </select>
+                <ValidationMessage For=@( () => request.DebitAccount ) />
+            </div>
+
+
+
+
+            <div class="form-group">
+                <label for="narration">Narration</label>
+                <InputText class="form-control" placeholder="narration" id="narration" @bind-Value="request.Description" />
+                <ValidationMessage For=@( () => request.Description ) />
+            </div>
+          
+            <button type="submit" @attributes=SubmitButtonAttribute class="btn btn-primary" style="width: 100%;">Proceed</button>
+        </EditForm>
+    </div>
+</div>
+
+<Toasts class="p-3" Messages="messages" AutoHide="true" Delay="6000" Placement="ToastsPlacement.TopRight" />
+
+<Preload/>
+
+@code {
+    private TransferDto request = new();
+    private string customError;
+    private bool validSubmit;
+    private Dictionary<string, object> SubmitButtonAttribute = new ();
+    private List<BankDto> banks = new();
+    private List<AccountDto> accounts = new();
+    [Parameter]
+    public string Id { get; set; }
+    private CustomValidator _customValidator;
+    [Inject]
+    protected PreloadService PreloadService{get; set;}
+
+
+    List<ToastMessage> messages = new List<ToastMessage>();
+
+    private void ShowMessage(ToastMessage toastMessage) => messages.Add(toastMessage);
+
+    private ToastMessage CreateToastMessage(ToastType toastType)
+    => new ToastMessage
+        {
+            Type = toastType,
+            Title = "Success",
+            HelpText = $"Now",
+            Message = $"Transaction Successful",
+        };
+
+    protected override async Task OnInitializedAsync()
+    {
+        banks = (Utilities.GetAllBanks()).ToList();
+        accounts = (await accountAction.GetCustomerAccounts(Id)).ToList();
+        SubmitButtonAttribute.Add("disabled", "");
+
+    }
+
+
+    private async Task CompleteTransfer()
+    {
+        TransferDto dto = new()
+        {
+            Amount = request.Amount,
+            CreditAccount = request.CreditAccount,
+            CreditAccountName = request.CreditAccountName,
+            DebitAccount = request.DebitAccount,
+            Description = request.Description,
+            DestinationBankCode = request.DestinationBankCode
+        };
+
+        PreloadService.Show(SpinnerColor.Dark);
+
+        var account = await accountAction.GetAccountWithAccountNumber(dto.DebitAccount);
+
+        var errors = new Dictionary<string, List<string>>();
+
+        var minAmount = configuration.GetValue<decimal>("MinimumAmount");
+        if (request.Amount < minAmount )
+        {
+            PreloadService.Hide();
+            errors.Add(nameof(request.Amount), new List<string> { $"Amount cannot be less than {minAmount}" });
+            _customValidator.DisplayErrors(errors);
+            return;
+        }
+         
+        if (request.Amount > account.Balance )
+        {
+            PreloadService.Hide();
+            errors.Add(nameof(request.Amount), new List<string> { "Insufficient account balance for this transaction" });
+            _customValidator.DisplayErrors(errors);
+            return;
+        }
+        var name = await accountAction.GetCreditAccountName(request.CreditAccount, request.DestinationBankCode);
+
+        if (string.IsNullOrEmpty(name))
+        {
+            PreloadService.Hide();
+            errors.Add(nameof(request.CreditAccount), new List<string> { "Account not found" });
+            _customValidator.DisplayErrors(errors);
+            return;
+        }
+
+
+        var result = await accountAction.DebitAccount(dto);
+
+        PreloadService.Hide();
+
+        if(result.ResponseHeader.ResponseCode == "06")
+        {
+            customError = "Something went wrong";
+            request = new TransferDto();
+            return;
+        }
+
+        if(result.ResponseHeader.ResponseCode == "09")
+        {
+            var pendingMessage = new ToastMessage
+            {
+                Type = ToastType.Warning,
+                Title = "Processing",                
+                Message = $"Transfer Processing",
+            };
+
+            ShowMessage(pendingMessage);
+            request = new TransferDto();
+            return;
+        }
+
+        if(result.ResponseHeader.ResponseCode == "01")
+        {
+            var failureMessage = new ToastMessage
+            {
+                Type = ToastType.Danger,
+                Title = "Failed",                
+                Message = $"Transfer Failed",
+            };
+
+            ShowMessage(failureMessage);
+            request = new TransferDto();
+            return;
+        }
+
+        var successMessage = new ToastMessage
+            {
+                Type = ToastType.Success,
+                Title = "Success",
+                Message = $"Transfer Successful",
+            };
+
+        ShowMessage(successMessage);
+        request = new TransferDto();
+
+
+    }
+
+    private async Task AccountChanged(ChangeEventArgs e)
+    {
+        _customValidator.ClearErrors();
+       SubmitButtonAttribute["disabled"] = "";
+
+        request.CreditAccount = e.Value.ToString();
+
+
+        if (string.IsNullOrEmpty(request.CreditAccount) || request.CreditAccount.Length < 10)
+        {
+            request.CreditAccountName = string.Empty;
+            return;
+        }
+
+
+        if (string.IsNullOrEmpty(request.DestinationBankCode))
+        {
+            request.CreditAccountName = string.Empty;
+            return;
+        }
+
+        var name = await accountAction.GetCreditAccountName(request.CreditAccount, request.DestinationBankCode);
+
+        if (string.IsNullOrEmpty(name))
+        {
+            var errors = new Dictionary<string, List<string>>();
+            errors.Add(nameof(request.CreditAccount), new List<string> { "Account not found" });
+            _customValidator.DisplayErrors(errors);            
+        }
+
+        SubmitButtonAttribute.Remove("disabled");
+
+        request.CreditAccountName = name;
+
+    }
+
+
+    private async Task GetAccountName(ChangeEventArgs e)
+    {
+        _customValidator.ClearErrors();
+        SubmitButtonAttribute["disabled"] = "";
+
+
+        request.DestinationBankCode = e.Value.ToString();
+        
+        if (string.IsNullOrEmpty(request.CreditAccount) || request.CreditAccount.Length < 10)
+        {
+            request.CreditAccountName = string.Empty;
+            return;         
+        }
+
+
+        if (string.IsNullOrEmpty(request.DestinationBankCode))
+        {
+            request.CreditAccountName = string.Empty;            
+            return;
+        }
+
+
+
+        var name =  await accountAction.GetCreditAccountName(request.CreditAccount, request.DestinationBankCode);
+
+
+        if (string.IsNullOrEmpty(name))
+        {
+            var errors = new Dictionary<string, List<string>>();
+            errors.Add(nameof(request.CreditAccount), new List<string> { "Account not found" });
+            _customValidator.DisplayErrors(errors);
+        }
+
+        SubmitButtonAttribute.Remove("disabled");
+
+        request.CreditAccountName = name;
+
+    }
+}

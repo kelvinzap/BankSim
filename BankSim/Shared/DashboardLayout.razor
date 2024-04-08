@@ -1,0 +1,211 @@
+﻿@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager navManager
+@inject IConfiguration Configuration
+
+
+
+<div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+    <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
+        <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
+            <a class="navbar-brand brand-logo mr-5" href=""><img src="images/logo-mini.svg" class="mr-2" alt="logo" />@bankName</a>
+            <a class="navbar-brand brand-logo-mini" href=""><img src="images/logo-mini.svg" alt="logo" /></a>
+        </div>
+        <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
+            <button class="navbar-toggler navbar-toggler align-self-center" type="button">
+                <span class="icon-menu">
+                    <i class="bi bi-list" style="font-size: 23px;"></i>                    
+                </span>
+            </button>
+            <ul class="navbar-nav mr-lg-2">
+                <li class="nav-item nav-search d-none d-lg-block">
+
+                </li>
+            </ul>
+            <ul class="navbar-nav navbar-nav-right">
+                <li class="nav-item dropdown">
+                    <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-toggle="dropdown">
+                        <i class="bi bi-bell"></i>
+                        <span class="count"></span>
+                    </a>
+                    @* use this for displaying notifications *@
+                    @*  <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="notificationDropdown">
+                    <p class="mb-0 font-weight-normal float-left dropdown-header">Notifications</p>
+                    <a class="dropdown-item preview-item">
+                    <div class="preview-thumbnail">
+                    <div class="preview-icon bg-success">
+                    <i class="ti-info-alt mx-0"></i>
+                    </div>
+                    </div>
+                    <div class="preview-item-content">
+                    <h6 class="preview-subject font-weight-normal">Application Error</h6>
+                    <p class="font-weight-light small-text mb-0 text-muted">
+                    Just now
+                    </p>
+                    </div>
+                    </a>
+                    <a class="dropdown-item preview-item">
+                    <div class="preview-thumbnail">
+                    <div class="preview-icon bg-warning">
+                    <i class="ti-settings mx-0"></i>
+                    </div>
+                    </div>
+                    <div class="preview-item-content">
+                    <h6 class="preview-subject font-weight-normal">Settings</h6>
+                    <p class="font-weight-light small-text mb-0 text-muted">
+                    Private message
+                    </p>
+                    </div>
+                    </a>
+                    <a class="dropdown-item preview-item">
+                    <div class="preview-thumbnail">
+                    <div class="preview-icon bg-info">
+                    <i class="ti-user mx-0"></i>
+                    </div>
+                    </div>
+                    <div class="preview-item-content">
+                    <h6 class="preview-subject font-weight-normal">New user registration</h6>
+                    <p class="font-weight-light small-text mb-0 text-muted">
+                    2 days ago
+                    </p>
+                    </div>
+                    </a>
+                    </div> *@
+                </li>
+                <li class="nav-item nav-profile dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
+                        <img src="images/faces/profile.png" alt="profile" />
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
+                        @*  <a class="dropdown-item">
+                        <i class="ti-settings text-primary"></i>
+                        Settings
+                        </a> *@
+                        <a class="dropdown-item" @onclick="() => LogOut()">
+                            <i class="ti-power-off text-primary"></i>
+                            Logout
+                        </a>
+                    </div>
+                </li>
+
+            </ul>
+            <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button">
+                <span class="icon-menu">
+                    <i class="bi bi-list"></i>
+                </span>
+            </button>
+        </div>
+    </nav>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper" style="padding-left: 0;">
+        <!-- partial:partials/_settings-panel.html -->
+        <!-- partial -->
+        <!-- partial:partials/_sidebar.html -->
+        <nav class="sidebar sidebar-offcanvas" id="sidebar">
+            <ul class="nav">
+                <li class="nav-item @(DashboardIsActive ? "active" : "")">
+                    <a class="nav-link" href="">
+                        <i class="icon-grid bi bi-menu-button-wide"></i>
+                        <span class="menu-title">Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="nav-item @(CustomersIsActive ? "active" : "")">
+                    <a class="nav-link" href="customers">
+                        <i class="icon-grid bi bi-people-fill"></i>
+                        <span class="menu-title">Customers</span>
+                    </a>
+                </li>
+
+                <li class="nav-item @(TransactionsIsActive ? "active" : "")">
+                    <a class="nav-link" href="transactions">
+                        <i class=" icon-grid bi bi-clock-history"></i>
+                        <span class="menu-title">Transactions</span>
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+        <!-- partial -->
+        <div class="main-panel">
+            <div class="content-wrapper">
+
+                <PageTitle>@bankName</PageTitle>
+
+                <div class="page">
+                    <main>
+                        <article class="content px-4">
+                            @Body
+                        </article>
+                    </main>
+                </div>
+
+                <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+                <Preload />
+
+
+                <div id="blazor-error-ui">
+                    <environment include="Staging,Production">
+                        An error has occurred. This application may no longer respond until reloaded.
+                    </environment>
+                    <environment include="Development">
+                        An unhandled exception has occurred. See browser dev tools for details.
+                    </environment>
+                    <a href="" class="reload">Reload</a>
+                    <a class="dismiss">🗙</a>
+                </div>
+
+            </div>
+            <!-- content-wrapper ends -->
+            <!-- partial:partials/_footer.html -->
+            <footer class="footer">
+                <div class="d-sm-flex justify-content-center justify-content-sm-between">
+                    <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2023.  ETG. All rights reserved.</span>
+                    <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center">Made with <i class="ti-heart text-danger ml-1"></i></span>
+                </div>
+            </footer>
+            <!-- partial -->
+        </div>
+        <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+</div>
+
+
+
+
+
+@code{
+    private bool TransactionsIsActive;
+    private bool CustomersIsActive;
+    private bool DashboardIsActive;
+    private string bankName = "";
+    private string Customers = "customers";
+    private string Transactions = "transactions";
+    private string Dashboard = "";
+
+
+    protected override void OnInitialized()
+    {
+        bankName = Configuration.GetValue<string>("BankName");
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+       
+            var baseUrl = navManager.ToBaseRelativePath(navManager.Uri);            
+            CustomersIsActive = Customers == baseUrl;
+            TransactionsIsActive = Transactions == baseUrl;
+            DashboardIsActive = Dashboard == baseUrl;            
+            StateHasChanged();
+        
+    }
+   
+    
+    
+    private async Task LogOut()
+    {
+        await ((CustomAuthStateProvider)AuthenticationStateProvider).MarkUserAsAnonymous();
+    }
+}

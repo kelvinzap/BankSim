@@ -1,0 +1,191 @@
+﻿@page "/customers"
+@inject ICustomer customerAction
+@inject NavigationManager navManager
+
+
+        
+<div class="flex justify-between">
+    <h1 style="font-weight:bold; font-size:30px">Customers</h1>
+
+    <div class="flex justify-evenly text-center">
+        <a href="customers/create" class="button-17" style="font-size:12px; font-weight:500; ">
+            <svg class="mt-[5px]" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-top: 0;">
+                <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"></path>
+                <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"></path>
+            </svg>
+            <span>
+                <p class="mt-[5px] ml-[3px]" style="margin-bottom: 3px;font-size: inherit;">Create a Customer</p>
+            </span>
+        </a>
+    </div>
+
+</div>
+
+
+<div class="card">
+    <EditForm Model="filters" OnSubmit="() => FilterCustomers()">
+
+
+        <div class="filter-cont">
+
+            <div class="filters">
+                <label for="accountType" class="form-label">Account Type</label>
+                <InputText id="accountType" class="form-control" placeholder="accountType" @bind-Value="filters.AccountType" />
+            </div>
+
+            <div class="filters">
+                <label for="accountNumber" class="form-label">Account Number</label>
+                <InputText id="accountNumber" class="form-control" placeholder="accountNumber" @bind-Value="filters.AccountNumber" />
+            </div>
+           
+            <div class="filters">
+                <label for="customerName" class="form-label">Customer Name</label>
+                <InputText @bind-Value="filters.CustomerName" id="customerName" class="form-control" placeholder="customerName" />
+            </div>
+            
+            <div class="filters">
+                <label for="registrationDate" class="form-label">Registration Date</label>
+                <InputDate @bind-Value="filters.RegistrationDate" id="registrationDate" class="form-control" placeholder="registrationDate" />
+            </div>
+         
+            <div class="filters" style="display: grid;align-items: end;">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+
+        </div>
+
+    </EditForm>
+</div>
+
+<div class="card">
+    <div class="transactions">
+
+       
+
+        <div>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">LastName</th>
+                        <th scope="col">FirstName</th>
+                        <th scope="col">MiddleName</th>
+                        <th scope="col">Date of Birth</th>
+                        <th scope="col">Registration Date</th>
+                        <th scope="col" colspan="2">Actions</th>
+                    </tr>
+
+                </thead>
+
+                @if (customersDto.Customers != null)
+                {
+                    @foreach (var customer in customersDto.Customers)
+                    {
+                        <tbody>
+                            <tr class="cust-td">
+                                <td class="table-data" @onclick="(() => OpenDetails(customer))" scope="row">@(startSerialNumber + customersDto.Customers.IndexOf(customer))</td>
+                                <td>@customer.LastName</td>
+                                <td>@customer.FirstName</td>
+                                <td>@customer.MiddleName</td>
+                                <td>@customer.DateOfBirth.ToString("MM/dd/yyyy")</td>
+                                <td>@customer.CreationDate.ToString("MM/dd/yyyy")</td>
+                                <td class="table-data blue" @onclick="(() => Transfer(customer))"><i class="bi bi-arrow-left-right"></i></td>
+                                <td class="table-data green" @onclick="(() => OpenDetails(customer))"><i class="bi bi-eye-fill"></i></td>
+                            </tr>
+                        </tbody>
+                    }
+                }
+            </table>
+            @if (customersDto.Customers.Count > 0)
+            {
+                <span style="display: flex;justify-content: flex-end;padding-top: 18px;">
+                    <Pagination ActivePageNumber=currentPageNumber
+                                PageChanged="OnPageChangedAsync"
+                                TotalPages="@customersDto.TotalPages"
+                                DisplayPages="5"
+                                FirstLinkIcon="IconName.ChevronDoubleLeft"
+                                PreviousLinkIcon="IconName.ChevronLeft"
+                                NextLinkIcon="IconName.ChevronRight"
+                                LastLinkIcon="IconName.ChevronDoubleRight" />
+                </span>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private CustomersDto customersDto = new();   
+    private CustomerFilter filters = new();
+    private int itemsPerPage = 20;
+    private int startSerialNumber => (currentPageNumber - 1) * itemsPerPage + 1;
+    private int currentPageNumber = 1;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {                
+            await GetAllCustomers(1);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnPageChangedAsync(int newPageNumber)
+    {
+        //await GetAllCustomers(newPageNumber);
+        await Task.Run(() =>
+        {
+            currentPageNumber = newPageNumber;
+
+        });
+        await FilterCustomers(newPageNumber);
+    }
+
+    private async Task GetAllCustomers(int page)
+    {
+         var paginationFilter = new PaginationFilter
+        {
+            PageNumber = page           
+        };
+
+        var output = await customerAction.GetAllCustomersAsync(paginationFilter);
+        customersDto = output;
+    }
+
+    private void OpenDetails(CustomerDto customer)
+    {
+        navManager.NavigateTo($"customers/{customer.Id}");
+    }
+        
+    private void Transfer(CustomerDto customer)
+    {
+        navManager.NavigateTo($"transfer/{customer.Id}");
+    }
+
+    private void NavigateToCreateCustomer()
+    {
+        navManager.NavigateTo($"customers/create");
+    }
+
+
+    private async Task FilterCustomers(int pageNumber = 1)
+    {
+        currentPageNumber = pageNumber;
+        var paginationFilter = new PaginationFilter
+            {
+                PageNumber = pageNumber
+            };
+
+        var filter = new CustomerFilter
+            {
+                RegistrationDate = filters.RegistrationDate,
+                AccountNumber = filters.AccountNumber,
+                AccountType = filters.AccountType,
+                CustomerName = filters.CustomerName
+            };
+
+        customersDto = await customerAction.GetAllCustomersAsync(paginationFilter, filter);
+
+        StateHasChanged();
+
+    }
+}

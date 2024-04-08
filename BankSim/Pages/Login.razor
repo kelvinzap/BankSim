@@ -1,0 +1,92 @@
+﻿@page "/login"
+@inject IUser userAction
+@inject NavigationManager navManager
+@using BankSim.Component;
+@using Blazored.LocalStorage
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+
+@inject ILocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration configuration
+@layout AuthenticateLayout
+@attribute [AllowAnonymous]
+
+<div class="auth-form-light text-left py-5 px-4 px-sm-5">
+    <div class="brand-logo">
+        <div style="display: flex;justify-content: center;">
+            <img src="images/logo.png" style="width: 78px;" alt="logo">            
+        </div>
+    </div>
+    <h4>Hello! welcome back</h4>
+    <h6 class="font-weight-light">Sign in to continue.</h6>
+
+    <EditForm class="pt-3" Model="request" OnValidSubmit="CompleteLogin">
+        <div style="margin-bottom: 14px" class="validation-message">@customError</div>
+        <DataAnnotationsValidator />
+        <CustomValidator @ref="_customValidator"></CustomValidator>
+        <div class="form-group">
+            <InputText type="username" @bind-Value="request.Username" class=@(classes + (string.IsNullOrEmpty(customError) ? "" : " invalid")) id="email" placeholder="Username" />
+            <ValidationMessage For=@( () => request.Username ) />
+
+        </div>
+        <div class="form-group">
+            <InputText  type="password" @bind-Value="request.Password" class=@(classes + (string.IsNullOrEmpty(customError) ? "" : " invalid"))  id="password" placeholder="Password" />
+            <ValidationMessage For=@( () => request.Password ) />
+        </div>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn" value="SIGN IN">SIGN IN</button>
+        </div>
+        <div class="my-2 d-flex justify-content-between align-items-center">
+            <div class="form-check">
+                <label class="form-check-label text-muted">
+                    <input class="form-check-input login-checkbox" type="checkbox" id="inlineCheckbox1" value="true">
+                    Keep me signed in
+                </label>
+            </div>
+        </div>
+    </EditForm>
+  
+</div>
+
+@code {
+    private LoginDto request = new();
+    private CustomValidator _customValidator;
+    string customError;    
+    [Inject] protected PreloadService PreloadService { get; set; }
+    [CascadingParameter(Name = "AuthToken")] 
+    public string AccessToken { get; set; }
+    private string classes = $"form-control form-control-lg";
+    private async Task CompleteLogin()
+    {
+        PreloadService.Show();
+
+        LoginDto dto = new()
+            {
+                Username = request.Username,
+                Password = request.Password
+            };
+
+        var errors = new Dictionary<string, List<string>>();
+
+        var result = userAction.Login(dto);
+        PreloadService.Hide();
+
+        if(result.ResponseCode == "01")
+        {
+            customError = result.ResponseMessage;
+            return;
+        }
+
+        var lowUser = dto.Username.ToLower();
+        var value = lowUser + dto.Password;
+
+        var bankCode = configuration.GetValue<string>("BankCode");
+
+        await LocalStorage.SetItemAsync(bankCode, value);
+
+        await ((CustomAuthStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(value);
+        navManager.NavigateTo("");
+
+        return;
+    }
+}
